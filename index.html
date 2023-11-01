@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>관리자 로그인</title>
+</head>
+<body>
+<form name='loginForm'>
+    <table align='center' bgcolor='A09F9F' width='20%'>
+        <tr>
+            <td colspan=2>
+                <center><font size=4><b>관리자 로그인</b></font></center>
+                <center><font size=2>개발자에게 지급 받은 관리번호 6자리를 입력하세요.</font></center>
+                <br>
+            </td>
+            <br>
+            <br>
+        </tr>
+        <tr>
+            <td>Username:</td>
+            <td><input name='userid' size=25 type='text'><br></td>
+        </tr>
+        <br>
+        <br>
+        <tr>
+            <td>Password:</td>
+            <td><input name='pwd' size=25 type='Password'><br></td>
+            <br>
+            <br>
+        </tr>
+        <tr>
+            <td><input onclick='check(this.form)' type='submit' value='Login'></td>
+        </tr>
+    </table>
+</form>
+<script>
+    function check(form) {
+        if (form.userid.value == 'bsdg' && form.pwd.value == 'bsdg') {
+            window.open('/done')
+        } else {
+            alert('Error Password or Username')/*displays error message*/
+        }
+    }
+</script>
+</body>
+</html>
