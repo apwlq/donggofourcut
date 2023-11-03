@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 
 from flask import Flask, redirect, url_for, render_template
@@ -8,6 +9,7 @@ import glob
 import hashlib
 import qrcode
 from PIL import Image
+import webbrowser
 
 input_image = "C:\\Users\\*\\Pictures\\"  # 이미지가 저장된 디렉터리 경로
 
@@ -20,6 +22,7 @@ port = 22  # SFTP default port
 
 app = Flask(__name__)
 
+
 # 기본 페이지를 렌더링하는 라우트
 @app.route('/')
 def index():
@@ -28,40 +31,30 @@ def index():
 # 버튼을 클릭했을 때 처리하는 라우트
 @app.route('/bc1')
 def bc1():
-    myhash = hashlib.sha1(str(time.time()).encode()).hexdigest()
-    remote_path = f"/home/ubuntu/data/l3c/.{myhash}.jpg"
-    image_web_path = f"https://i1.lol/l3c/.{myhash}.jpg"
-    qrcode_generate(image_web_path, myhash)
-    # 디렉터리에서 파일들의 리스트를 가져옵니다.
-    list_of_files = glob.glob(input_image + '*.JPG')
-    # 파일들을 수정된 시간을 기준으로 정렬합니다.
-    sorted_files = sorted(list_of_files, key=os.path.getmtime, reverse=True)
-    # 최근의 4개 파일을 가져옵니다.
-    recent_files = sorted_files[:4]
-    imagehap("01", myhash, recent_files[3], recent_files[2], recent_files[1], recent_files[0])
-    sftp_upload_file(hostname, port, username, password, f"output_image/{myhash}.jpg", remote_path)
-    print(f"https://i1.lol/l3c/.{myhash}.jpg")
+    start("01")
     return redirect(url_for('done'))
 
 @app.route('/bc2')
 def bc2():
-    myhash = hashlib.sha1(str(time.time()).encode()).hexdigest()
-    remote_path = f"/home/ubuntu/data/l3c/.{myhash}.jpg"
-    image_web_path = f"https://i1.lol/l3c/.{myhash}.jpg"
-    qrcode_generate(image_web_path, myhash)
-    # 디렉터리에서 파일들의 리스트를 가져옵니다.
-    list_of_files = glob.glob(input_image + '*.JPG')
-    # 파일들을 수정된 시간을 기준으로 정렬합니다.
-    sorted_files = sorted(list_of_files, key=os.path.getmtime, reverse=True)
-    # 최근의 4개 파일을 가져옵니다.
-    recent_files = sorted_files[:4]
-    imagehap("02", myhash, recent_files[3], recent_files[2], recent_files[1], recent_files[0])
-    sftp_upload_file(hostname, port, username, password, f"output_image/{myhash}.jpg", remote_path)
-    print(f"https://i1.lol/l3c/.{myhash}.jpg")
+    start("02")
     return redirect(url_for('done'))
 
 @app.route('/bc3')
 def bc3():
+    start("03")
+    return redirect(url_for('done'))
+
+@app.route('/bc4')
+def bc4():
+    start("04")
+    return redirect(url_for('done'))
+
+@app.route('/bc5')
+def bc5():
+    start("05")
+    return redirect(url_for('done'))
+
+def start(theme):
     myhash = hashlib.sha1(str(time.time()).encode()).hexdigest()
     remote_path = f"/home/ubuntu/data/l3c/.{myhash}.jpg"
     image_web_path = f"https://i1.lol/l3c/.{myhash}.jpg"
@@ -72,11 +65,47 @@ def bc3():
     sorted_files = sorted(list_of_files, key=os.path.getmtime, reverse=True)
     # 최근의 4개 파일을 가져옵니다.
     recent_files = sorted_files[:4]
-    imagehap("03", myhash, recent_files[3], recent_files[2], recent_files[1], recent_files[0])
+    imagehap(theme, myhash, recent_files[3], recent_files[2], recent_files[1], recent_files[0])
     sftp_upload_file(hostname, port, username, password, f"output_image/{myhash}.jpg", remote_path)
     print(f"https://i1.lol/l3c/.{myhash}.jpg")
-    return redirect(url_for('done'))
+    print(f"https://i1.lol/l4c/.{myhash}.jpg")
+    # 4장의 이미지 파일 경로를 리스트에 저장합니다.
+    image_files = ["theme/dummy_f.jpg", f"output_image/{myhash}.jpg", f"output_image/{myhash}.jpg", "theme/dummy.jpg"]
 
+    # 이미지를 열어서 객체로 만듭니다.
+    images = [Image.open(file) for file in image_files]
+
+    # 이미지의 너비와 높이를 가져옵니다.
+    widths, heights = zip(*(i.size for i in images))
+
+    # 가로로 이어붙였을 때의 전체 이미지의 너비와 높이를 계산합니다.
+    total_width = sum(widths)
+    max_height = max(heights)
+
+    # 가로로 이어붙일 빈 캔버스(캔버스의 크기)를 생성합니다.
+    new_image = Image.new('CMYK', (total_width, max_height))
+
+    # 이미지들을 가로로 이어붙입니다.
+    x_offset = 0
+    for img in images:
+        new_image.paste(img, (x_offset, 0))
+        x_offset += img.width
+
+    # 새로운 이미지를 저장합니다.
+    new_image.save(f"print_image/{myhash}.jpg")
+    sftp_upload_file(hostname, port, username, password, f"print_image/{myhash}.jpg", f"/home/ubuntu/data/l4c/.{myhash}.jpg")
+
+
+    logs = open("latest.log", "a")
+    logs.write(f"{datetime.now()} | https://i1.lol/l4c.{myhash}.jpg\n")
+    logs.close()
+
+    os.remove(f"qrcode_image/{myhash}.png")
+    os.remove(f"output_image/{myhash}.jpg")
+    # os.remove(f"print_image/{myhash}.jpg")
+
+    webbrowser.open(f"https://i1.lol/l4c/.{myhash}.jpg")
+    # webbrowser.open(f"C:\\Users\\donggo\\PycharmProjects\\donggofourcut\\output_image\\{myhash}.jpg")
 # 다음 페이지를 렌더링하는 라우트
 @app.route('/done')
 def done():
@@ -144,13 +173,14 @@ def imagehap(template_path, hash, image_path1, image_path2, image_path3, image_p
 
     # 오른쪽 하단에 이미지 배치
     x_offset = base_width - images[1].size[0] - 30  # 오른쪽 정렬
-    y_offset = base_height - images[1].size[1] - 50  # 아래쪽 정렬
+    y_offset = base_height - images[1].size[1] - 95   # 아래쪽 정렬
     result_image.paste(images[1], (x_offset, y_offset))
     y_offset -= images[1].size[1]  # 위로 이동하여 이미지 중첩
 
     result_image.convert("CMYK")  # CMYK 모드로 변환
     # 결과 이미지 저장
     result_image.save(f'output_image/{hash}.jpg')
+
 def sftp_upload_file(hostname, port, username, password, local_file_path, remote_path):
     try:
         transport = paramiko.Transport((hostname, port))
